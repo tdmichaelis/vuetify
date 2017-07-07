@@ -53,8 +53,8 @@ export default {
         'input-group--tab-focused': this.tabFocused,
         'input-group--disabled': this.disabled,
         'input-group--error': this.hasError,
-        'input-group--append-icon': this.appendIcon,
-        'input-group--prepend-icon': this.prependIcon,
+        'input-group--append-icon': this.appendIcon || this.$scopedSlots.appendIcon,
+        'input-group--prepend-icon': this.prependIcon || this.$scopedSlots.prependIcon,
         'input-group--required': this.required,
         'input-group--hide-details': this.hideDetails,
         'input-group--placeholder': !!this.placeholder,
@@ -153,25 +153,25 @@ export default {
       )
     },
     genIcon (type) {
-      const icon = this[`${type}Icon`]
+      let icon
       const cb = this[`${type}IconCb`]
       const hasCallback = typeof cb === 'function'
 
-      return this.$createElement(
-        'v-icon',
-        {
-          'class': {
-            [`input-group__${type}-icon`]: true,
-            'input-group__icon-cb': hasCallback
-          },
-          on: {
-            click: e => {
-              hasCallback && cb(e)
-            }
-          }
+      if (this.$scopedSlots[`${type}Icon`]) {
+        icon = this.$scopedSlots[`${type}Icon`]({
+          callback: cb
+        })
+      } else {
+        icon = [this.$createElement('v-icon', [this[`${type}Icon`]])]
+      }
+
+      return this.$createElement('span', {
+        'class': {
+          'input-group__icon': true,
+          'input-group__icon-cb': hasCallback
         },
-        icon
-      )
+        on: { click: e => hasCallback && cb(e) }
+      }, icon)
     },
     genInputGroup (input, data = {}) {
       const children = []
@@ -208,7 +208,7 @@ export default {
 
       wrapperChildren.push(input)
 
-      if (this.prependIcon) {
+      if (this.prependIcon || this.$scopedSlots.prependIcon) {
         wrapperChildren.unshift(this.genIcon('prepend'))
       }
 
